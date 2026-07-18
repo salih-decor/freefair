@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام فك باند Free Fire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* الإعدادات العامة */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: #0d0d12;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* إعدادات خلفية الماتريكس المتحركة */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        /* حاوية زجاجية (Glassmorphism) */
+        .glass-container {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease-in-out;
+        }
+
+        /* صورة اللعبة والتأثيرات */
+        .ff-image-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .ff-image-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px #0ff, 0 0 30px #0ff, 0 0 45px #0ff;
+        }
+
+        /* الشريط المتحرك (Marquee) */
+        .marquee-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #0ff;
+            border-right: 3px solid #0ff;
+            padding: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 5px #0ff;
+            animation: marquee 10s linear infinite;
+        }
+
+        /* المدخلات (Inputs) */
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #0ff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        /* الأزرار (Buttons) */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #0f2027, #203a43, #2c5364);
+            color: #0ff;
+            border: 1px solid #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+            transform: scale(1.02);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #555;
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .btn-secondary:hover {
+            color: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* أزرار الواجهة الثانية */
+        .btn-action {
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .btn-red {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+        }
+        .btn-red:hover { box-shadow: 0 0 20px #ff0000; background: rgba(255, 0, 0, 0.4); }
+
+        .btn-yellow {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #ffd700;
+        }
+        .btn-yellow:hover { box-shadow: 0 0 20px #ffd700; background: rgba(255, 215, 0, 0.4); }
+
+        .btn-green {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+        }
+        .btn-green:hover { box-shadow: 0 0 20px #00ff00; background: rgba(0, 255, 0, 0.4); }
+
+        /* حالة الكود أعلى الواجهة الثانية */
+        .code-status {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #0ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        .code-status span {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        /* شاشة Terminal */
+        .terminal-window {
+            display: none;
+            background: #000;
+            border: 1px solid #333;
+            border-top: 25px solid #222;
+            border-radius: 10px;
+            text-align: left;
+            padding: 15px;
+            margin-top: 20px;
+            height: 200px;
+            overflow-y: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+        
+        .terminal-window::before {
+            content: "Terminal - Root Access";
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            color: #888;
+            font-size: 0.8rem;
+            font-family: sans-serif;
+        }
+
+        .terminal-content {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #fff;
+            line-height: 1.5;
+            direction: ltr;
+        }
+
+        .text-green { color: #0f0; }
+        .text-white { color: #fff; }
+
+        /* نافذة النجاح المنبثقة */
+        .success-popup {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 30, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            width: 80%;
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #00ff00;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px #00ff00;
+        }
+
+        /* الحركات (Animations) */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .hidden { display: none !important; }
+
+        /* تجاوب الشاشات */
+        @media (max-width: 600px) {
+            .glass-container { padding: 25px; width: 95%; }
+            .ff-image-container { width: 120px; height: 120px; }
+            .marquee-text { font-size: 1rem; }
+            .btn { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- خلفية الماتريكس المتحركة -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- الواجهة الأولى: إدخال الكود -->
+    <div id="page1" class="glass-container">
+        <div class="ff-image-container">
+            <!-- استبدل الرابط بصورة فري فاير الخاصة بك -->
+            <img src="https://via.placeholder.com/150/000000/00FFFF?text=FF+Logo" alt="Free Fire">
+        </div>
+        
+        <div class="marquee-box">
+            <div class="marquee-text">Free Fire – الذكرى السنوية التاسعة (9th Anniversary)</div>
+        </div>
+
+        <div class="input-group">
+            <label>أدخل كود التفعيل</label>
+            <input type="text" id="activationCode" placeholder="XXXX-XXXX-XXXX" autocomplete="off">
+        </div>
+
+        <button class="btn btn-primary" onclick="verifyCode()">تنفيذ</button>
+        <button class="btn btn-secondary" onclick="window.location.href='https://t.me/x_sofi_BFF'">شراء كود</button>
+    </div>
+
+    <!-- الواجهة الثانية: إدخال الـ ID وتنفيذ المهام -->
+    <div id="page2" class="glass-container hidden">
+        
+        <div class="code-status">
+            الكود النشط: <span id="displayCode">----</span> <br>
+            الاستخدامات المتبقية: <span id="displayUses">0</span>
+        </div>
+
+        <div id="actionPanel">
+            <div class="input-group">
+                <label>اكتب الـ ID الخاص بك في اللعبة</label>
+                <input type="number" id="playerId" placeholder="مثال: 123456789" autocomplete="off">
+            </div>
+
+            <button class="btn btn-action btn-red" onclick="startExecution('Permanent Unban')">فك باند نهائي</button>
+            <button class="btn btn-action btn-yellow" onclick="startExecution('Temporary Unban')">فك باند مؤقت</button>
+            <button class="btn btn-action btn-green" onclick="startExecution('Remove Email')">إزالة إيميل الاستعادة</button>
+        </div>
+
+        <!-- نافذة Terminal الوهمية -->
+        <div id="terminal" class="terminal-window">
+            <div id="terminalContent" class="terminal-content"></div>
+        </div>
+
+        <!-- رسالة النجاح -->
+        <div id="successPopup" class="success-popup">
+            <div class="success-icon">✔️</div>
+            <h2 style="margin-bottom: 20px;">تمت العملية بنجاح</h2>
+            <button class="btn btn-primary" onclick="resetSystem()">موافق</button>
+        </div>
+    </div>
+
+    <script>
+        // نظام الأكواد المدمج (قاعدة بيانات محلية)
+        // 7 أكواد لاستخدام واحد، 7 لاستخدامين، 7 لثلاثة
+        const codesDB = {
+            // استخدام واحد
+            '5tN9TGu4cF8bFNV8v': { max: 1, used: 0 }, 'x7K2pL9mR4vQ1wY8z': { max: 1, used: 0 }, 'aB3dE6fH9jK2mN5pQ': { max: 1, used: 0 },
+            'R8tV1wX4yZ7bC9eF2': { max: 1, used: 0 }, 'hJ5kM8nP1qS4tW7vX': { max: 1, used: 0 }, 'yA0cB3dF6gH9jL2mN': { max: 1, used: 0 }, 'P5qR8sU1vW4xZ7aC9': { max: 1, used: 0 },
+            
+            // استخدامين
+            'dF2gJ5kM8nP1qS4tW': { max: 2, used: 0 }, '7vX0yA3cB6dF9gH2j': { max: 2, used: 0 }, 'L5mN8pQ1rT4uW7xZ0': { max: 2, used: 0 },
+            'aC3eF6hJ9kM2nP5qS': { max: 2, used: 0 }, '8tV1wX4yZ7bC0eF3h': { max: 2, used: 0 }, 'J6kM9nP2qS5tW8vX1': { max: 2, used: 0 }, 'yZ4bC7eF0hJ3kM6nP': { max: 2, used: 0 },
+            
+            // 3 استخدامات
+            '9qS2tW5vX8yA1cB4d': { max: 3, used: 0 }, 'F7gH0jL3mN6pQ9rT2': { max: 3, used: 0 }, 'uW5xZ8aC1eF4hJ7kM': { max: 3, used: 0 },
+            '0nP3qS6tW9vX2yZ5b': { max: 3, used: 0 }, 'C8eF1hJ4kM7nP0qS3': { max: 3, used: 0 }, 'tW6vX9yA2cB5dF8gH': { max: 3, used: 0 }, '1jL4mN7pQ0rT3uW6x': { max: 3, used: 0 }
+        };
+
+        let currentActiveCode = "";
+
+        // دالة التحقق من الكود
+        function verifyCode() {
+            const inputCode = document.getElementById('activationCode').value.trim();
+            
+            if (!inputCode) {
+                alert("الرجاء إدخال الكود!");
+                return;
+            }
+
+            if (codesDB[inputCode]) {
+                if (codesDB[inputCode].used < codesDB[inputCode].max) {
+                    // الكود صالح
+                    currentActiveCode = inputCode;
+                    const remaining = codesDB[inputCode].max - codesDB[inputCode].used;
+                    
+                    document.getElementById('page1').classList.add('hidden');
+                    document.getElementById('page2').classList.remove('hidden');
+                    
+                    document.getElementById('displayCode').innerText = currentActiveCode;
+                    document.getElementById('displayUses').innerText = remaining;
+                } else {
+                    alert("عذراً، هذا الكود قد استنفد عدد الاستخدامات المسموحة.");
+                }
+            } else {
+                alert("كود خاطئ أو غير موجود!");
+            }
+        }
+
+        // دالة بدء تنفيذ العملية (Terminal Simulation)
+        function startExecution(operationType) {
+            const playerId = document.getElementById('playerId').value.trim();
+            if (!playerId) {
+                alert("الرجاء إدخال الـ ID الخاص بك أولاً!");
+                return;
+            }
+
+            // إخفاء الأزرار وإظهار التيرمينال
+            document.getElementById('actionPanel').classList.add('hidden');
+            const terminal = document.getElementById('terminal');
+            const termContent = document.getElementById('terminalContent');
+            terminal.style.display = 'block';
+            termContent.innerHTML = '';
+
+            // مصطلحات تقنية تناسب تحليل الهياكل والتعديل
+            const logs = [
+                "<span class='text-white'>[INFO] Initializing connection to host server...</span>",
+                `<span class='text-white'>[INFO] Authenticating Token: <span class='text-green'>${currentActiveCode}</span></span>`,
+                `<span class='text-white'>[INFO] Scanning database for Target ID: <span class='text-green'>${playerId}</span></span>`,
+                "<span class='text-white'>[INFO] Analyzing memory structures and assembly offsets...</span>",
+                "<span class='text-white'>[INFO] Mapping keybinds and bypassing security protocols...</span>",
+                `<span class='text-white'>[EXEC] Initiating Operation: <span class='text-green'>${operationType}</span></span>`,
+                "<span class='text-white'>[INFO] Configuring memory-patching options...</span>",
+                "<span class='text-white'>[WARN] Overwriting hex values at 0x00F8B2A...</span>",
+                "<span class='text-green'>[SUCCESS] Payload injected successfully!</span>",
+                "<span class='text-green'>[SUCCESS] Process completed. Disconnecting...</span>"
+            ];
+
+            let lineIndex = 0;
+            
+            // كتابة الأسطر تدريجياً
+            const typingInterval = setInterval(() => {
+                if (lineIndex < logs.length) {
+                    termContent.innerHTML += logs[lineIndex] + "<br>";
+                    terminal.scrollTop = terminal.scrollHeight; // التمرير التلقائي للأسفل
+                    lineIndex++;
+                } else {
+                    clearInterval(typingInterval);
+                    
+                    // بعد انتهاء الكتابة ننتظر قليلاً ثم نظهر رسالة النجاح
+                    setTimeout(() => {
+                        // تسجيل استخدام الكود
+                        codesDB[currentActiveCode].used += 1;
+                        
+                        terminal.style.display = 'none';
+                        document.getElementById('successPopup').style.display = 'block';
+                    }, 1500);
+                }
+            }, 800); // سرعة ظهور الأسطر (800 ملي ثانية لكل سطر)
+        }
+
+        // دالة العودة وإعادة ضبط النظام
+        function resetSystem() {
+            // إعادة الواجهة للوضع الافتراضي
+            document.getElementById('successPopup').style.display = 'none';
+            document.getElementById('page2').classList.add('hidden');
+            document.getElementById('page1').classList.remove('hidden');
+            
+            document.getElementById('actionPanel').classList.remove('hidden');
+            document.getElementById('activationCode').value = '';
+            document.getElementById('playerId').value = '';
+            document.getElementById('terminalContent').innerHTML = '';
+            
+            currentActiveCode = "";
+        }
+
+        // ----------------------------------------------------
+        // نظام خلفية الماتريكس المتحركة (Matrix Rain Effect)
+        // ----------------------------------------------------
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ضبط حجم الشاشة
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // الحروف والأرقام المستخدمة (حروف لاتينية وأرقام)
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        // مصفوفة للأعمدة
+        const drops = [];
+        for (let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        // دالة رسم التأثير
+        function drawMatrix() {
+            // خلفية شبه شفافة لصنع تأثير الذيل (Trail effect)
+            ctx.fillStyle = 'rgba(13, 13, 18, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // لون النصوص (سماوي ليتناسب مع موقعك)
+            ctx.fillStyle = '#0ff'; 
+            ctx.font = fontSize + 'px "Fira Code", monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                // اختيار حرف عشوائي
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                
+                // رسم الحرف
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                // إعادة القطرة للأعلى عشوائياً بعد نزولها
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        // تشغيل الحركة كل 33 جزء من الثانية
+        setInterval(drawMatrix, 33);
+
+        // تحديث أبعاد الخلفية عند تكبير/تصغير الشاشة أو تدوير الهاتف
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // إعادة ضبط الأعمدة
+            const newColumns = canvas.width / fontSize;
+            for (let x = 0; x < newColumns; x++) {
+                if(!drops[x]) drops[x] = 1;
+            }
+        });
+    </script>
+</body>
+</html>
