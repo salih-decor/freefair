@@ -267,7 +267,23 @@
             text-shadow: 0 0 15px #00ff00;
         }
 
+        /* إعدادات التحميل (اللشارش) */
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border-left-color: #0ff;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
         /* الحركات (Animations) */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -298,7 +314,6 @@
     <!-- الواجهة الأولى: إدخال الكود -->
     <div id="page1" class="glass-container">
         <div class="ff-image-container">
-            <!-- استبدل الرابط بصورة فري فاير الخاصة بك -->
             <img src="logo.png" alt="Free Fire">
         </div>
         
@@ -313,6 +328,13 @@
 
         <button class="btn btn-primary" onclick="verifyCode()">تنفيذ</button>
         <button class="btn btn-secondary" onclick="window.location.href='https://t.me/x_sofi_BFF'">شراء كود</button>
+    </div>
+
+    <!-- واجهة التحميل (لشارش) -->
+    <div id="loadingPage" class="glass-container hidden">
+        <div class="spinner"></div>
+        <h2 style="color: #0ff; text-shadow: 0 0 10px #0ff;">جاري التحقق من الكود...</h2>
+        <p style="color: #aaa; margin-top: 10px;">الرجاء الانتظار</p>
     </div>
 
     <!-- الواجهة الثانية: إدخال الـ ID وتنفيذ المهام -->
@@ -348,9 +370,8 @@
     </div>
 
     <script>
-        // نظام الأكواد المدمج (قاعدة بيانات محلية)
-        // 7 أكواد لاستخدام واحد، 7 لاستخدامين، 7 لثلاثة
-        const codesDB = {
+        // نظام الأكواد المدمج (الافتراضي)
+        let codesDB = {
             // استخدام واحد
             '5tN9TGu4cF8bFNV8v': { max: 1, used: 0 }, 'x7K2pL9mR4vQ1wY8z': { max: 1, used: 0 }, 'aB3dE6fH9jK2mN5pQ': { max: 1, used: 0 },
             'R8tV1wX4yZ7bC9eF2': { max: 1, used: 0 }, 'hJ5kM8nP1qS4tW7vX': { max: 1, used: 0 }, 'yA0cB3dF6gH9jL2mN': { max: 1, used: 0 }, 'P5qR8sU1vW4xZ7aC9': { max: 1, used: 0 },
@@ -363,6 +384,16 @@
             '9qS2tW5vX8yA1cB4d': { max: 3, used: 0 }, 'F7gH0jL3mN6pQ9rT2': { max: 3, used: 0 }, 'uW5xZ8aC1eF4hJ7kM': { max: 3, used: 0 },
             '0nP3qS6tW9vX2yZ5b': { max: 3, used: 0 }, 'C8eF1hJ4kM7nP0qS3': { max: 3, used: 0 }, 'tW6vX9yA2cB5dF8gH': { max: 3, used: 0 }, '1jL4mN7pQ0rT3uW6x': { max: 3, used: 0 }
         };
+
+        // التحقق مما إذا كانت الأكواد محفوظة مسبقاً في المتصفح لجعل الاستخدام دائم حتى بعد التحديث
+        if (localStorage.getItem('ff_codesDB')) {
+            codesDB = JSON.parse(localStorage.getItem('ff_codesDB'));
+        }
+
+        // دالة لحفظ التحديثات في المتصفح
+        function saveCodesToStorage() {
+            localStorage.setItem('ff_codesDB', JSON.stringify(codesDB));
+        }
 
         let currentActiveCode = "";
 
@@ -377,17 +408,26 @@
 
             if (codesDB[inputCode]) {
                 if (codesDB[inputCode].used < codesDB[inputCode].max) {
-                    // الكود صالح
-                    currentActiveCode = inputCode;
-                    const remaining = codesDB[inputCode].max - codesDB[inputCode].used;
                     
+                    // إخفاء الصفحة الأولى وإظهار شاشة التحميل
                     document.getElementById('page1').classList.add('hidden');
-                    document.getElementById('page2').classList.remove('hidden');
-                    
-                    document.getElementById('displayCode').innerText = currentActiveCode;
-                    document.getElementById('displayUses').innerText = remaining;
+                    document.getElementById('loadingPage').classList.remove('hidden');
+
+                    // الانتظار 3 ثواني (3000 ملي ثانية) ثم الدخول للموقع
+                    setTimeout(() => {
+                        currentActiveCode = inputCode;
+                        const remaining = codesDB[inputCode].max - codesDB[inputCode].used;
+                        
+                        document.getElementById('loadingPage').classList.add('hidden');
+                        document.getElementById('page2').classList.remove('hidden');
+                        
+                        document.getElementById('displayCode').innerText = currentActiveCode;
+                        document.getElementById('displayUses').innerText = remaining;
+                    }, 3000);
+
                 } else {
-                    alert("عذراً، هذا الكود قد استنفد عدد الاستخدامات المسموحة.");
+                    // الرسالة التي تظهر إذا كان الكود قد استخدم بالكامل
+                    alert("هذا الكود تم استخدامه بالكامل ولم يعد صالحاً!");
                 }
             } else {
                 alert("كود خاطئ أو غير موجود!");
@@ -436,8 +476,9 @@
                     
                     // بعد انتهاء الكتابة ننتظر قليلاً ثم نظهر رسالة النجاح
                     setTimeout(() => {
-                        // تسجيل استخدام الكود
+                        // تسجيل استخدام الكود وحفظه بشكل دائم
                         codesDB[currentActiveCode].used += 1;
+                        saveCodesToStorage(); // تحديث قاعدة البيانات في المتصفح
                         
                         terminal.style.display = 'none';
                         document.getElementById('successPopup').style.display = 'block';
