@@ -242,29 +242,43 @@
         .text-green { color: #0f0; }
         .text-white { color: #fff; }
 
-        /* نافذة النجاح المنبثقة */
+        /* نافذة النجاح المنبثقة المعدلة */
         .success-popup {
             display: none;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(15, 30, 20, 0.95);
+            background: rgba(10, 25, 30, 0.95);
             backdrop-filter: blur(20px);
-            border: 1px solid #00ff00;
+            border: 2px solid #0ff;
             border-radius: 15px;
-            padding: 30px;
-            width: 80%;
-            box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+            padding: 35px 20px;
+            width: 85%;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
             text-align: center;
             z-index: 10;
         }
 
         .success-icon {
-            font-size: 4rem;
-            color: #00ff00;
-            margin-bottom: 15px;
-            text-shadow: 0 0 15px #00ff00;
+            font-size: 4.5rem;
+            color: #0ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #0ff;
+        }
+
+        .success-title {
+            color: #fff;
+            text-shadow: 0 0 10px #0ff;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .success-desc {
+            color: #ccc;
+            font-size: 1rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
         }
 
         /* إعدادات التحميل (اللشارش) */
@@ -314,7 +328,8 @@
     <!-- الواجهة الأولى: إدخال الكود -->
     <div id="page1" class="glass-container">
         <div class="ff-image-container">
-            <img src="logo.png" alt="Free Fire">
+            <!-- تم تغيير اسم الصورة هنا -->
+            <img src="ff_logo.png" alt="Free Fire">
         </div>
         
         <div class="marquee-box">
@@ -361,11 +376,12 @@
             <div id="terminalContent" class="terminal-content"></div>
         </div>
 
-        <!-- رسالة النجاح -->
+        <!-- رسالة النجاح المعدلة -->
         <div id="successPopup" class="success-popup">
-            <div class="success-icon">✔️</div>
-            <h2 style="margin-bottom: 20px;">تمت العملية بنجاح</h2>
-            <button class="btn btn-primary" onclick="resetSystem()">موافق</button>
+            <div class="success-icon">✅</div>
+            <h2 class="success-title">تمت العملية بنجاح!</h2>
+            <p class="success-desc">تم إرسال البيانات وتجاوز الحماية بنجاح. يرجى التحقق من الحساب بعد التحديث المباشر للخوادم.</p>
+            <button class="btn btn-primary" onclick="resetSystem()">إنهاء العـملية</button>
         </div>
     </div>
 
